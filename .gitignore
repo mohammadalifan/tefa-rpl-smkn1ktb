@@ -1,0 +1,23 @@
+# Rahasia dan konfigurasi lokal
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Sistem operasi dan editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Dependensi dan hasil build umum
+node_modules/
+vendor/
+dist/
+build/
+coverage/
+
+# Cache dan log
+.cache/
+*.log
