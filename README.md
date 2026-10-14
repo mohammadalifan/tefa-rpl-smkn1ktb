@@ -1,6 +1,6 @@
-# Aplikasi Team TEFA RPL
+# TEFA RPL SMKN 1 KTB
 
-Repository bersama untuk pengembangan aplikasi oleh tim TEFA RPL.
+Project bersama untuk pengembangan aplikasi sekolah oleh tim TEFA RPL.
 
 ## Memulai
 
