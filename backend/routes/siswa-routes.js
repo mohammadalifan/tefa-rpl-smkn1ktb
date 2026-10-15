@@ -6,5 +6,7 @@ const router = express.Router();
 
 router.use(requireAuth);
 router.get("/", siswaController.index);
+router.patch("/:id", siswaController.update);
+router.delete("/:id", siswaController.destroy);
 
 module.exports = router;

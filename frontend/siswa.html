@@ -19,6 +19,7 @@
           <p class="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">Akademik</p>
           <a href="/guru.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white"><i data-lucide="users-round" class="h-5 w-5"></i><span>Data Guru</span></a>
           <a href="/siswa.html" class="flex items-center gap-3 rounded-lg bg-slate-800 px-3 py-2.5 font-medium"><i data-lucide="graduation-cap" class="h-5 w-5"></i><span>Data Siswa</span></a>
+          <a href="/#jurusan" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white"><i data-lucide="panels-top-left" class="h-5 w-5"></i><span>Jurusan</span></a>
           <a href="/#kelas" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white"><i data-lucide="school" class="h-5 w-5"></i><span>Kelas</span></a>
           <a href="/#absensi" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white"><i data-lucide="calendar-check" class="h-5 w-5"></i><span>Absensi</span></a>
           <a href="/#nilai" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white"><i data-lucide="clipboard-list" class="h-5 w-5"></i><span>Nilai</span></a>
@@ -32,7 +33,7 @@
         <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
-              <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th class="px-5 py-3">No.</th><th class="px-5 py-3">Nama</th><th class="px-5 py-3">NISN</th><th class="px-5 py-3">Email</th><th class="px-5 py-3">Status</th></tr></thead>
+              <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th class="px-5 py-3">No.</th><th class="px-5 py-3">Nama</th><th class="px-5 py-3">NISN</th><th class="px-5 py-3">Email</th><th class="px-5 py-3">Status</th><th class="px-5 py-3">Aksi</th></tr></thead>
               <tbody id="siswa-rows" class="divide-y divide-slate-100"></tbody>
             </table>
           </div>
@@ -40,11 +41,33 @@
         </section>
       </main>
     </div>
+    <dialog id="edit-dialog" class="w-full max-w-lg rounded-xl p-0 shadow-xl backdrop:bg-slate-900/50">
+      <form id="edit-form" class="p-6">
+        <h2 class="text-lg font-semibold">Edit Data Siswa</h2>
+        <p class="mt-1 text-sm text-slate-500">Perbarui identitas atau kredensial akun siswa.</p>
+        <div class="mt-5 space-y-4">
+          <div><label for="edit-name" class="mb-1.5 block text-sm font-medium">Nama lengkap</label><input id="edit-name" name="name" required maxlength="100" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" /></div>
+          <div><label for="edit-nisn" class="mb-1.5 block text-sm font-medium">NISN</label><input id="edit-nisn" name="nisn" required maxlength="20" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" /></div>
+          <div><label for="edit-email" class="mb-1.5 block text-sm font-medium">Email</label><input id="edit-email" name="email" type="email" required maxlength="150" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" /></div>
+          <div><label for="edit-password" class="mb-1.5 block text-sm font-medium">Password baru (opsional)</label><input id="edit-password" name="password" type="password" minlength="8" autocomplete="new-password" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" /><p class="mt-1 text-xs text-slate-500">Kosongkan jika password tidak diubah.</p></div>
+        </div>
+        <p id="edit-message" class="mt-4 hidden rounded-lg px-3 py-2 text-sm" role="alert"></p>
+        <div class="mt-5 flex justify-end gap-2"><button id="cancel-edit" type="button" class="rounded-lg border border-slate-300 px-4 py-2 font-medium hover:bg-slate-50">Batal</button><button id="save-edit" type="submit" class="rounded-lg bg-indigo-600 px-4 py-2 font-semibold text-white hover:bg-indigo-700 disabled:opacity-60">Simpan Perubahan</button></div>
+      </form>
+    </dialog>
     <script>
       lucide.createIcons();
       const tbody = document.querySelector("#siswa-rows");
       const message = document.querySelector("#table-message");
-      fetch("/api/siswa").then(async (response) => {
+      const dialog = document.querySelector("#edit-dialog");
+      const editForm = document.querySelector("#edit-form");
+      let editingSiswa = null;
+
+      async function loadSiswa() {
+        tbody.replaceChildren();
+        message.classList.remove("hidden");
+        message.textContent = "Memuat data siswa...";
+        const response = await fetch("/api/siswa");
         if (response.status === 401 || response.redirected) return window.location.assign("/login");
         const result = await response.json();
         if (!response.ok) throw new Error(result.message);
@@ -58,9 +81,75 @@
             cell.textContent = value;
             row.append(cell);
           });
+          const actions = document.createElement("td");
+          actions.className = "whitespace-nowrap px-5 py-4";
+          const editButton = document.createElement("button");
+          editButton.type = "button";
+          editButton.textContent = "Edit";
+          editButton.className = "mr-3 font-medium text-indigo-600 hover:text-indigo-800";
+          editButton.addEventListener("click", () => {
+            editingSiswa = siswa;
+            editForm.elements.name.value = siswa.name;
+            editForm.elements.nisn.value = siswa.nisn;
+            editForm.elements.email.value = siswa.email;
+            editForm.elements.password.value = "";
+            document.querySelector("#edit-message").classList.add("hidden");
+            dialog.showModal();
+          });
+          const deleteButton = document.createElement("button");
+          deleteButton.type = "button";
+          deleteButton.textContent = "Hapus";
+          deleteButton.className = "font-medium text-red-600 hover:text-red-800";
+          deleteButton.addEventListener("click", async () => {
+            if (!window.confirm(`Hapus data siswa ${siswa.name}? Akun login siswa ini juga akan dihapus.`)) return;
+            try {
+              const deleteResponse = await fetch(`/api/siswa/${siswa.id}`, { method: "DELETE" });
+              const deleteResult = await deleteResponse.json();
+              if (deleteResponse.status === 401) return window.location.assign("/login");
+              if (!deleteResponse.ok) throw new Error(deleteResult.message || "Data siswa gagal dihapus.");
+              await loadSiswa();
+            } catch (error) {
+              window.alert(error.message);
+            }
+          });
+          actions.append(editButton, deleteButton);
+          row.append(actions);
           tbody.append(row);
         });
-      }).catch((error) => { message.textContent = error.message || "Data siswa gagal dimuat."; });
+      }
+
+      loadSiswa().catch((error) => { message.textContent = error.message || "Data siswa gagal dimuat."; });
+      editForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (!editingSiswa) return;
+        const saveButton = document.querySelector("#save-edit");
+        const editMessage = document.querySelector("#edit-message");
+        saveButton.disabled = true;
+        editMessage.classList.add("hidden");
+        try {
+          const response = await fetch(`/api/siswa/${editingSiswa.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(Object.fromEntries(new FormData(editForm))),
+          });
+          const result = await response.json();
+          if (response.status === 401) return window.location.assign("/login");
+          if (!response.ok) throw new Error(result.message || "Data siswa gagal diperbarui.");
+          dialog.close();
+          editingSiswa = null;
+          await loadSiswa();
+        } catch (error) {
+          editMessage.textContent = error.message;
+          editMessage.className = "mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700";
+        } finally {
+          saveButton.disabled = false;
+        }
+      });
+      document.querySelector("#cancel-edit").addEventListener("click", () => {
+        dialog.close();
+        editingSiswa = null;
+      });
+      dialog.addEventListener("close", () => { editingSiswa = null; });
       document.querySelector("#logout-button").addEventListener("click", async () => {
         await fetch("/api/auth/logout", { method: "POST" });
         window.location.assign("/login");
