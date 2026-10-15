@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Siswa | TEFA RPL</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  <body class="min-h-screen bg-slate-100 text-slate-800">
+    <div class="flex min-h-screen">
+      <aside class="w-64 bg-slate-900 px-5 py-6 text-white">
+        <a href="/" class="mb-8 block text-xl font-bold">TEFA RPL</a>
+        <nav class="space-y-2" aria-label="Menu utama">
+          <p class="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">Utama</p>
+          <a href="/" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white"><i data-lucide="layout-dashboard" class="h-5 w-5"></i><span>Dashboard</span></a>
+        </nav>
+        <nav class="mt-8 space-y-2" aria-label="Menu akademik">
+          <p class="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">Akademik</p>
+          <a href="/guru.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white"><i data-lucide="users-round" class="h-5 w-5"></i><span>Data Guru</span></a>
+          <a href="/siswa.html" class="flex items-center gap-3 rounded-lg bg-slate-800 px-3 py-2.5 font-medium"><i data-lucide="graduation-cap" class="h-5 w-5"></i><span>Data Siswa</span></a>
+          <a href="/#kelas" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white"><i data-lucide="school" class="h-5 w-5"></i><span>Kelas</span></a>
+          <a href="/#absensi" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white"><i data-lucide="calendar-check" class="h-5 w-5"></i><span>Absensi</span></a>
+          <a href="/#nilai" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white"><i data-lucide="clipboard-list" class="h-5 w-5"></i><span>Nilai</span></a>
+        </nav>
+      </aside>
+      <main class="min-w-0 flex-1 p-8">
+        <header class="mb-8 flex items-center justify-between">
+          <div><h1 class="text-2xl font-bold">Data Siswa</h1><p class="mt-2 text-slate-600">Daftar akun dan identitas siswa.</p></div>
+          <button id="logout-button" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium hover:bg-slate-50">Keluar</button>
+        </header>
+        <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-sm">
+              <thead class="bg-slate-50 text-xs uppercase tracking-wide text-slate-500"><tr><th class="px-5 py-3">No.</th><th class="px-5 py-3">Nama</th><th class="px-5 py-3">NISN</th><th class="px-5 py-3">Email</th><th class="px-5 py-3">Status</th></tr></thead>
+              <tbody id="siswa-rows" class="divide-y divide-slate-100"></tbody>
+            </table>
+          </div>
+          <p id="table-message" class="px-5 py-8 text-center text-sm text-slate-500">Memuat data siswa...</p>
+        </section>
+      </main>
+    </div>
+    <script>
+      lucide.createIcons();
+      const tbody = document.querySelector("#siswa-rows");
+      const message = document.querySelector("#table-message");
+      fetch("/api/siswa").then(async (response) => {
+        if (response.status === 401 || response.redirected) return window.location.assign("/login");
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message);
+        message.classList.toggle("hidden", result.data.length > 0);
+        message.textContent = result.data.length ? "" : "Belum ada data siswa.";
+        result.data.forEach((siswa, index) => {
+          const row = document.createElement("tr");
+          [index + 1, siswa.name, siswa.nisn, siswa.email, siswa.is_active ? "Aktif" : "Nonaktif"].forEach((value) => {
+            const cell = document.createElement("td");
+            cell.className = "px-5 py-4";
+            cell.textContent = value;
+            row.append(cell);
+          });
+          tbody.append(row);
+        });
+      }).catch((error) => { message.textContent = error.message || "Data siswa gagal dimuat."; });
+      document.querySelector("#logout-button").addEventListener("click", async () => {
+        await fetch("/api/auth/logout", { method: "POST" });
+        window.location.assign("/login");
+      });
+    </script>
+  </body>
+</html>

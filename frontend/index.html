@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Sekolah</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+  <body class="min-h-screen bg-slate-100 text-slate-800">
+    <div class="flex min-h-screen">
+      <aside class="w-64 bg-slate-900 px-5 py-6 text-white">
+        <a href="#dashboard" class="mb-8 block text-xl font-bold">TEFA RPL</a>
+
+        <nav aria-label="Menu utama" class="space-y-2">
+          <p class="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">Utama</p>
+          <a href="#dashboard" class="flex items-center gap-3 rounded-lg bg-slate-800 px-3 py-2.5 font-medium"><i data-lucide="layout-dashboard" class="h-5 w-5"></i><span>Dashboard</span></a>
+        </nav>
+
+        <nav aria-label="Menu akademik" class="mt-8 space-y-2">
+          <p class="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-slate-400">Akademik</p>
+          <a href="/guru.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white"><i data-lucide="users-round" class="h-5 w-5"></i><span>Data Guru</span></a>
+          <a href="/siswa.html" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white"><i data-lucide="graduation-cap" class="h-5 w-5"></i><span>Data Siswa</span></a>
+          <a href="#kelas" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white"><i data-lucide="school" class="h-5 w-5"></i><span>Kelas</span></a>
+          <a href="#absensi" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white"><i data-lucide="calendar-check" class="h-5 w-5"></i><span>Absensi</span></a>
+          <a href="#nilai" class="flex items-center gap-3 rounded-lg px-3 py-2.5 text-slate-300 hover:bg-slate-800 hover:text-white"><i data-lucide="clipboard-list" class="h-5 w-5"></i><span>Nilai</span></a>
+        </nav>
+      </aside>
+
+      <main id="dashboard" class="flex-1 p-8">
+        <div class="flex items-center justify-between">
+          <div>
+            <h1 class="text-2xl font-bold">Dashboard</h1>
+            <p class="mt-2 text-slate-600">Selamat datang, <span id="user-name">...</span>.</p>
+          </div>
+          <button id="logout-button" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium hover:bg-slate-50">Keluar</button>
+        </div>
+        <p class="mt-6 text-slate-600">Sistem informasi sekolah.</p>
+      </main>
+    </div>
+    <script>
+      lucide.createIcons();
+      fetch("/api/auth/me")
+        .then((response) => response.json())
+        .then(({ user }) => {
+          if (user) document.querySelector("#user-name").textContent = user.name;
+        });
+      document.querySelector("#logout-button").addEventListener("click", async () => {
+        await fetch("/api/auth/logout", { method: "POST" });
+        window.location.href = "/login";
+      });
+    </script>
+  </body>
+</html>

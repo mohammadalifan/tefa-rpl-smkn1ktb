@@ -1,0 +1,29 @@
+{
+  "name": "backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "scripts": {
+    "migrate": "node migrate.js",
+    "migrate:fresh": "node migrate-fresh.js",
+    "seed:admin": "node seeders/seed-admin.js",
+    "seed:users": "node seeders/seed-users.js",
+    "seed:guru": "node seeders/seed-guru.js",
+    "seed:siswa": "node seeders/seed-siswa.js",
+    "seed": "node seeders/seed-all.js",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^18.0.8",
+    "express": "^5.3.0",
+    "express-mysql-session": "^3.0.3",
+    "express-session": "^1.19.0",
+    "mysql2": "^3.24.6"
+  }
+}
