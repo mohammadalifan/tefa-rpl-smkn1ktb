@@ -2,6 +2,7 @@ const express = require("express");
 const session = require("express-session");
 const MySQLStore = require("express-mysql-session")(session);
 const path = require("node:path");
+const fs = require("node:fs");
 const authRoutes = require("./routes/auth-routes");
 const guruRoutes = require("./routes/guru-routes");
 const siswaRoutes = require("./routes/siswa-routes");
@@ -9,7 +10,8 @@ const { requireAuth } = require("./middlewares/auth-middleware");
 
 const app = express();
 const port = process.env.PORT || 3000;
-const frontendDirectory = path.join(__dirname, "../frontend");
+const frontendDirectory = path.join(__dirname, "../frontend/dist");
+const frontendIndex = path.join(frontendDirectory, "index.html");
 
 const sessionStore = new MySQLStore({
   host: process.env.DB_HOST,
@@ -41,23 +43,20 @@ app.use(
 app.use("/api/auth", authRoutes);
 app.use("/api/guru", guruRoutes);
 app.use("/api/siswa", siswaRoutes);
-app.get("/login", (request, response) => {
-  if (request.session.user) return response.redirect("/");
-  response.sendFile(path.join(frontendDirectory, "login.html"));
+app.use("/api", (request, response) => {
+  response.status(404).json({ message: "Endpoint API tidak ditemukan." });
 });
-app.get("/index.html", requireAuth, (request, response) => {
-  response.sendFile(path.join(frontendDirectory, "index.html"));
-});
-app.get("/guru.html", requireAuth, (request, response) => {
-  response.sendFile(path.join(frontendDirectory, "guru.html"));
-});
-app.get("/siswa.html", requireAuth, (request, response) => {
-  response.sendFile(path.join(frontendDirectory, "siswa.html"));
-});
-app.get("/", requireAuth, (request, response) => {
-  response.sendFile(path.join(frontendDirectory, "index.html"));
-});
-app.use(express.static(frontendDirectory));
+
+if (fs.existsSync(frontendIndex)) {
+  app.use(express.static(frontendDirectory));
+  app.get(/.*/, (request, response) => {
+    response.sendFile(frontendIndex);
+  });
+} else {
+  app.get("/", requireAuth, (request, response) => {
+    response.status(503).send("Frontend build belum tersedia. Jalankan npm run build di folder frontend.");
+  });
+}
 
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);

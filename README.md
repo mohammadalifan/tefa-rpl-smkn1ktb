@@ -18,13 +18,30 @@ Project bersama untuk pengembangan aplikasi sekolah oleh tim TEFA RPL.
 
 ### Menjalankan server
 
-Dari folder `backend`:
+Jalankan backend dan frontend di dua terminal.
+
+Terminal pertama, dari folder `backend`:
 
 ```bash
 npm start
 ```
 
-Buka `http://localhost:3000`. Halaman login tersedia di `http://localhost:3000/login`.
+Terminal kedua, dari folder `frontend`:
+
+```bash
+npm install
+npm run dev
+```
+
+Buka alamat Vite yang ditampilkan di terminal (biasanya `http://localhost:5173`). Vite meneruskan request `/api` ke backend di `http://localhost:3000`.
+
+Untuk menjalankan hasil production, build Vue terlebih dahulu dari folder `frontend`:
+
+```bash
+npm run build
+```
+
+Setelah itu jalankan backend; Express menyajikan build Vue dari `frontend/dist`.
 
 ### Migration
 
