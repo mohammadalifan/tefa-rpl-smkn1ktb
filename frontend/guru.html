@@ -29,6 +29,20 @@
           <div><h1 class="text-2xl font-bold">Data Guru</h1><p class="mt-2 text-slate-600">Daftar akun dan identitas guru.</p></div>
           <button id="logout-button" class="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium hover:bg-slate-50">Keluar</button>
         </header>
+        <section class="mb-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+          <h2 class="text-lg font-semibold">Tambah Guru</h2>
+          <p class="mt-1 text-sm text-slate-500">Buat akun login dan profil guru baru.</p>
+          <form id="guru-form" class="mt-5 grid gap-4 sm:grid-cols-2">
+            <div><label for="guru-name" class="mb-1.5 block text-sm font-medium">Nama lengkap</label><input id="guru-name" name="name" required maxlength="100" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" /></div>
+            <div><label for="guru-nip" class="mb-1.5 block text-sm font-medium">NIP</label><input id="guru-nip" name="nip" required maxlength="30" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" /></div>
+            <div><label for="guru-email" class="mb-1.5 block text-sm font-medium">Email</label><input id="guru-email" name="email" type="email" required maxlength="150" autocomplete="email" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" /></div>
+            <div><label for="guru-password" class="mb-1.5 block text-sm font-medium">Password awal</label><input id="guru-password" name="password" type="password" required minlength="8" autocomplete="new-password" class="w-full rounded-lg border border-slate-300 px-3 py-2.5 outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100" /></div>
+            <div class="sm:col-span-2">
+              <p id="form-message" class="mb-3 hidden rounded-lg px-3 py-2 text-sm" role="status"></p>
+              <button id="submit-guru" type="submit" class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 font-semibold text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"><i data-lucide="user-plus" class="h-4 w-4"></i><span>Simpan Guru</span></button>
+            </div>
+          </form>
+        </section>
         <section class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
           <div class="overflow-x-auto">
             <table class="w-full text-left text-sm">
@@ -44,7 +58,11 @@
       lucide.createIcons();
       const tbody = document.querySelector("#guru-rows");
       const message = document.querySelector("#table-message");
-      fetch("/api/guru").then(async (response) => {
+      async function loadGuru() {
+        tbody.replaceChildren();
+        message.classList.remove("hidden");
+        message.textContent = "Memuat data guru...";
+        const response = await fetch("/api/guru");
         if (response.status === 401 || response.redirected) return window.location.assign("/login");
         const result = await response.json();
         if (!response.ok) throw new Error(result.message);
@@ -60,7 +78,37 @@
           });
           tbody.append(row);
         });
-      }).catch((error) => { message.textContent = error.message || "Data guru gagal dimuat."; });
+      }
+      loadGuru().catch((error) => { message.textContent = error.message || "Data guru gagal dimuat."; });
+      document.querySelector("#guru-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const submitButton = document.querySelector("#submit-guru");
+        const formMessage = document.querySelector("#form-message");
+        const data = Object.fromEntries(new FormData(form));
+        submitButton.disabled = true;
+        formMessage.classList.add("hidden");
+
+        try {
+          const response = await fetch("/api/guru", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+          const result = await response.json();
+          if (response.status === 401) return window.location.assign("/login");
+          if (!response.ok) throw new Error(result.message || "Data guru gagal disimpan.");
+          form.reset();
+          formMessage.textContent = result.message;
+          formMessage.className = "mb-3 rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700";
+          await loadGuru();
+        } catch (error) {
+          formMessage.textContent = error.message;
+          formMessage.className = "mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700";
+        } finally {
+          submitButton.disabled = false;
+        }
+      });
       document.querySelector("#logout-button").addEventListener("click", async () => {
         await fetch("/api/auth/logout", { method: "POST" });
         window.location.assign("/login");

@@ -1,4 +1,5 @@
 const db = require("../config/database");
+const bcrypt = require("bcryptjs");
 
 async function getAll() {
   const [rows] = await db.query(
@@ -11,4 +12,25 @@ async function getAll() {
   return rows;
 }
 
-module.exports = { getAll };
+async function create({ name, email, password, nip }) {
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const [userResult] = await connection.query(
+      "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'guru')",
+      [name, email, hashedPassword],
+    );
+    await connection.query("INSERT INTO guru (user_id, nip) VALUES (?, ?)", [userResult.insertId, nip]);
+    await connection.commit();
+    return userResult.insertId;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
+module.exports = { getAll, create };

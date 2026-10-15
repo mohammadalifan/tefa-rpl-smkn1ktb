@@ -6,5 +6,6 @@ const router = express.Router();
 
 router.use(requireAuth);
 router.get("/", guruController.index);
+router.post("/", guruController.store);
 
 module.exports = router;
