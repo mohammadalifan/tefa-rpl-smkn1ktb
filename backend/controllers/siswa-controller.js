@@ -10,6 +10,35 @@ async function index(request, response) {
   }
 }
 
+async function store(request, response) {
+  const { name, email, password, nisn } = request.body;
+  if ([name, email, password, nisn].some((value) => typeof value !== "string" || !value.trim())) {
+    return response.status(400).json({ message: "Nama, email, password, dan NISN wajib diisi." });
+  }
+
+  const siswa = { name: name.trim(), email: email.trim().toLowerCase(), password, nisn: nisn.trim() };
+  if (siswa.name.length > 100 || siswa.email.length > 150 || siswa.nisn.length > 20) {
+    return response.status(400).json({ message: "Nama, email, atau NISN melebihi batas karakter." });
+  }
+  if (!/^\S+@\S+\.\S+$/.test(siswa.email)) {
+    return response.status(400).json({ message: "Format email tidak valid." });
+  }
+  if (siswa.password.length < 8) {
+    return response.status(400).json({ message: "Password minimal 8 karakter." });
+  }
+
+  try {
+    const userId = await siswaModel.create(siswa);
+    return response.status(201).json({ message: "Data siswa berhasil ditambahkan.", userId });
+  } catch (error) {
+    if (error.code === "ER_DUP_ENTRY") {
+      return response.status(409).json({ message: "Email atau NISN sudah terdaftar." });
+    }
+    console.error("Failed to create siswa:", error.message);
+    return response.status(500).json({ message: "Data siswa gagal disimpan." });
+  }
+}
+
 async function update(request, response) {
   const { name, email, password = "", nisn } = request.body;
   if ([name, email, nisn].some((value) => typeof value !== "string" || !value.trim()) || typeof password !== "string") {
@@ -60,4 +89,4 @@ async function destroy(request, response) {
   }
 }
 
-module.exports = { index, update, destroy };
+module.exports = { index, store, update, destroy };

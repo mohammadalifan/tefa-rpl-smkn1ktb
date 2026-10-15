@@ -12,6 +12,27 @@ async function getAll() {
   return rows;
 }
 
+async function create({ name, email, password, nisn }) {
+  const connection = await db.getConnection();
+
+  try {
+    await connection.beginTransaction();
+    const hashedPassword = await bcrypt.hash(password, 12);
+    const [userResult] = await connection.query(
+      "INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, 'siswa')",
+      [name, email, hashedPassword],
+    );
+    await connection.query("INSERT INTO siswa (user_id, nisn) VALUES (?, ?)", [userResult.insertId, nisn]);
+    await connection.commit();
+    return userResult.insertId;
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+}
+
 async function update(id, { name, email, password, nisn }) {
   const connection = await db.getConnection();
 
@@ -56,4 +77,4 @@ async function remove(id) {
   return result.affectedRows > 0;
 }
 
-module.exports = { getAll, update, remove };
+module.exports = { getAll, create, update, remove };
