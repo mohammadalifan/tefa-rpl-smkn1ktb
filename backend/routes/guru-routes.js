@@ -7,5 +7,7 @@ const router = express.Router();
 router.use(requireAuth);
 router.get("/", guruController.index);
 router.post("/", guruController.store);
+router.patch("/:id", guruController.update);
+router.delete("/:id", guruController.destroy);
 
 module.exports = router;
